@@ -30,12 +30,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session
     },
+  },
+  events: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === "microsoft-entra-id" && profile) {
-        const email = profile.email as string | undefined
+      if (account?.provider === "microsoft-entra-id" && profile && user.id) {
+        const email = (profile.email as string | undefined)?.toLowerCase()
         if (email && isUhEmail(email)) {
           await prisma.user.update({
-            where: { id: user.id! },
+            where: { id: user.id },
             data: {
               uhEmail: email,
               uhEmailVerified: true,
@@ -43,7 +45,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           })
         }
       }
-      return true
     },
   },
 })
