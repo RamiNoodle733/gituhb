@@ -33,17 +33,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === "microsoft-entra-id" && profile && user.id) {
-        const email = (profile.email as string | undefined)?.toLowerCase()
-        if (email && isUhEmail(email)) {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              uhEmail: email,
-              uhEmailVerified: true,
-            },
-          })
+      try {
+        if (account?.provider === "microsoft-entra-id" && profile && user.id) {
+          const email = (
+            (profile.email as string | undefined) ??
+            (profile.preferred_username as string | undefined) ??
+            (profile.mail as string | undefined)
+          )?.toLowerCase()
+          if (email && isUhEmail(email)) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                uhEmail: email,
+                uhEmailVerified: true,
+              },
+            })
+          }
         }
+      } catch (error) {
+        console.error("Error in signIn event:", error)
       }
     },
   },
