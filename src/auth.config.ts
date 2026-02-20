@@ -1,12 +1,16 @@
-import GitHub from "next-auth/providers/github"
+import MicrosoftEntraId from "next-auth/providers/microsoft-entra-id"
 import type { NextAuthConfig } from "next-auth"
 
 export const authConfig = {
   providers: [
-    GitHub({
-      clientId: process.env.AUTH_GITHUB_ID,
-      clientSecret: process.env.AUTH_GITHUB_SECRET,
-      authorization: { params: { scope: "read:user user:email" } },
+    MicrosoftEntraId({
+      clientId: process.env.AUTH_MICROSOFT_ENTRA_ID_ID,
+      clientSecret: process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET,
+      authorization: {
+        params: {
+          scope: "openid profile email",
+        },
+      },
     }),
   ],
   pages: {

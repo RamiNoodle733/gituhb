@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { authConfig } from "@/auth.config"
+import { isUhEmail } from "@/lib/utils"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -30,20 +31,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session
     },
     async signIn({ user, account, profile }) {
-      if (account?.provider === "github" && profile) {
-        const githubProfile = profile as {
-          login?: string
-          html_url?: string
-          avatar_url?: string
+      if (account?.provider === "microsoft-entra-id" && profile) {
+        const email = profile.email as string | undefined
+        if (email && isUhEmail(email)) {
+          await prisma.user.update({
+            where: { id: user.id! },
+            data: {
+              uhEmail: email,
+              uhEmailVerified: true,
+            },
+          })
         }
-        await prisma.user.update({
-          where: { id: user.id! },
-          data: {
-            githubUsername: githubProfile.login,
-            githubProfileUrl: githubProfile.html_url,
-            image: githubProfile.avatar_url,
-          },
-        })
       }
       return true
     },

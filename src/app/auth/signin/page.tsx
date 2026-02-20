@@ -9,7 +9,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card"
-import { Github } from "lucide-react"
+import { GraduationCap } from "lucide-react"
 
 export default async function SignInPage() {
   const session = await auth()
@@ -26,25 +26,25 @@ export default async function SignInPage() {
           </div>
           <CardTitle className="font-heading text-2xl">Sign in to GitUHb</CardTitle>
           <CardDescription>
-            Connect with your GitHub account to start collaborating on UH projects.
+            Sign in with your UH Microsoft 365 account to start collaborating on UH projects.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form
             action={async () => {
               "use server"
-              await signIn("github", { redirectTo: "/onboarding" })
+              await signIn("microsoft-entra-id", { redirectTo: "/onboarding" })
             }}
           >
             <Button type="submit" className="w-full" size="lg">
-              <Github className="mr-2 size-5" />
-              Continue with GitHub
+              <GraduationCap className="mr-2 size-5" />
+              Sign in with UH Account
             </Button>
           </form>
         </CardContent>
         <CardFooter>
           <p className="w-full text-center text-xs text-muted-foreground">
-            You&apos;ll need a UH email (@uh.edu or @cougarnet.uh.edu) to apply to projects.
+            Sign in with your University of Houston Microsoft 365 account.
           </p>
         </CardFooter>
       </Card>
