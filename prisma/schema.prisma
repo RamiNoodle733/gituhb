@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Auth.js required models
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  // Extended profile
+  username         String?  @unique
+  bio              String?  @db.Text
+  uhEmail          String?  @unique
+  uhEmailVerified  Boolean  @default(false)
+  githubUsername    String?  @unique
+  githubProfileUrl String?
+  skills           String[]
+  graduationYear   Int?
+  major            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  ownedProjects Project[]       @relation("ProjectOwner")
+  applications  Application[]
+  memberships   ProjectMember[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// UH Email Verification
+model UhEmailVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([email, code])
+  @@map("uh_email_verifications")
+}
+
+// Project models
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum TimeCommitment {
+  LESS_THAN_5
+  FIVE_TO_TEN
+  TEN_TO_TWENTY
+  TWENTY_PLUS
+}
+
+model Project {
+  id              String         @id @default(cuid())
+  title           String
+  slug            String         @unique
+  description     String         @db.Text
+  longDescription String?        @db.Text
+  githubRepoUrl   String?
+  status          ProjectStatus  @default(ACTIVE)
+  timeCommitment  TimeCommitment
+  techStack       String[]
+  tags            String[]
+  maxMembers      Int?
+  imageUrl        String?
+
+  ownerId String
+  owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  roles        ProjectRole[]
+  members      ProjectMember[]
+  applications Application[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+  @@map("projects")
+}
+
+model ProjectRole {
+  id          String  @id @default(cuid())
+  title       String
+  description String? @db.Text
+  filled      Boolean @default(false)
+  count       Int     @default(1)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  applications Application[]
+  members      ProjectMember[]
+
+  @@index([projectId])
+  @@map("project_roles")
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+model Application {
+  id      String            @id @default(cuid())
+  message String            @db.Text
+  status  ApplicationStatus @default(PENDING)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  roleId String
+  role   ProjectRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, projectId, roleId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("applications")
+}
+
+enum MemberRole {
+  OWNER
+  MEMBER
+}
+
+model ProjectMember {
+  id       String     @id @default(cuid())
+  role     MemberRole @default(MEMBER)
+  joinedAt DateTime   @default(now())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  projectRoleId String?
+  projectRole   ProjectRole? @relation(fields: [projectRoleId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, projectId])
+  @@index([projectId])
+  @@map("project_members")
+}
