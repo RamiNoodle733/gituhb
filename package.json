@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && echo 'export * from \"./browser\"' > src/generated/prisma/index.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
