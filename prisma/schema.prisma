@@ -120,6 +120,19 @@ model Project {
   maxMembers      Int?
   imageUrl        String?
 
+  // GitHub integration (cached repo data)
+  githubRepoOwner    String?
+  githubRepoName     String?
+  githubRepoId       Int?
+  githubDescription  String?        @db.Text
+  githubStars        Int?
+  githubForks        Int?
+  githubOpenIssues   Int?
+  githubLanguage     String?
+  githubLanguages    Json?
+  githubLastCommitAt DateTime?
+  githubSyncedAt     DateTime?
+
   ownerId String
   owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 

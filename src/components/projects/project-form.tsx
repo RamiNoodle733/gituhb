@@ -1,10 +1,10 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus, Trash2, Loader2 } from "lucide-react"
+import { Plus, Trash2, Loader2, Github } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -33,16 +33,34 @@ import {
 import { createProject, updateProject } from "@/lib/actions/project"
 import { TECH_STACK_OPTIONS, TAG_OPTIONS, TIME_COMMITMENT_LABELS } from "@/lib/constants"
 import { ProjectStatus } from "@/generated/prisma"
+import { RepoPickerDialog } from "@/components/projects/repo-picker-dialog"
 
 interface ProjectFormProps {
   mode: "create" | "edit"
   initialData?: CreateProjectInput
   projectId?: string
+  githubConnected?: boolean
 }
 
-export function ProjectForm({ mode, initialData, projectId }: ProjectFormProps) {
+const LANGUAGE_TO_TECH: Record<string, string> = {
+  JavaScript: "JavaScript",
+  TypeScript: "TypeScript",
+  Python: "Python",
+  Java: "Java",
+  "C++": "C++",
+  "C#": "C#",
+  Go: "Go",
+  Rust: "Rust",
+  Swift: "Swift",
+  Kotlin: "Kotlin",
+  HTML: "React",
+  CSS: "Tailwind CSS",
+}
+
+export function ProjectForm({ mode, initialData, projectId, githubConnected }: ProjectFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [repoPickerOpen, setRepoPickerOpen] = useState(false)
 
   const form = useForm<CreateProjectInput>({
     resolver: zodResolver(createProjectSchema),
@@ -93,9 +111,80 @@ export function ProjectForm({ mode, initialData, projectId }: ProjectFormProps) 
     })
   }
 
+  function handleRepoSelect(repo: {
+    html_url: string
+    description: string | null
+    language: string | null
+    topics: string[]
+    name: string
+  }) {
+    form.setValue("githubRepoUrl", repo.html_url)
+
+    if (!form.getValues("title")) {
+      form.setValue("title", repo.name.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()))
+    }
+
+    if (!form.getValues("description") && repo.description) {
+      form.setValue("description", repo.description)
+    }
+
+    // Map language to tech stack options
+    const currentTech = form.getValues("techStack")
+    if (repo.language && LANGUAGE_TO_TECH[repo.language]) {
+      const tech = LANGUAGE_TO_TECH[repo.language]
+      if (!currentTech.includes(tech)) {
+        form.setValue("techStack", [...currentTech, tech])
+      }
+    }
+
+    // Map topics to tags
+    const currentTags = form.getValues("tags")
+    const tagOptions = TAG_OPTIONS as readonly string[]
+    for (const topic of repo.topics) {
+      const normalized = topic.toLowerCase()
+      const match = tagOptions.find((t) => t.toLowerCase().replace(/\//g, "-") === normalized)
+      if (match && !currentTags.includes(match)) {
+        currentTags.push(match)
+      }
+    }
+    if (currentTags.length > form.getValues("tags").length) {
+      form.setValue("tags", [...currentTags])
+    }
+
+    toast.success("Repository linked! Fields auto-filled.")
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* Import from GitHub */}
+        {githubConnected && (
+          <div className="rounded-lg border border-dashed p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Import from GitHub</p>
+                <p className="text-xs text-muted-foreground">
+                  Select a repository to auto-fill project details.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRepoPickerOpen(true)}
+              >
+                <Github className="mr-2 size-4" />
+                Select Repo
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <RepoPickerDialog
+          open={repoPickerOpen}
+          onOpenChange={setRepoPickerOpen}
+          onSelect={handleRepoSelect}
+        />
+
         {/* Title */}
         <FormField
           control={form.control}

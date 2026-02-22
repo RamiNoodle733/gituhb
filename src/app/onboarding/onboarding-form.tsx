@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
-import { Loader2, Check, ArrowRight, ArrowLeft, Github } from "lucide-react"
+import { Loader2, Check, ArrowRight, ArrowLeft, Github, CheckCircle2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,27 +18,31 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { TagInput } from "@/components/ui/tag-input"
-import { updateUsername, updateProfile, updateGithubUsername } from "@/lib/actions/profile"
+import { updateUsername, updateProfile } from "@/lib/actions/profile"
 import { TECH_STACK_OPTIONS } from "@/lib/constants"
 
 const STEPS = ["Username", "GitHub", "Profile"]
 
-export function OnboardingForm() {
+interface OnboardingFormProps {
+  githubUsername?: string | null
+}
+
+export function OnboardingForm({ githubUsername }: OnboardingFormProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep] = useState(0)
   const [isPending, startTransition] = useTransition()
 
   // Step 1 state
   const [username, setUsername] = useState("")
 
-  // Step 2 state
-  const [githubUsername, setGithubUsername] = useState("")
-
   // Step 3 state
   const [bio, setBio] = useState("")
   const [skills, setSkills] = useState<string[]>([])
   const [major, setMajor] = useState("")
   const [graduationYear, setGraduationYear] = useState("")
+
+  const isGithubConnected = !!githubUsername || searchParams.get("github") === "connected"
 
   function handleUsernameSubmit() {
     if (username.length < 3) {
@@ -53,20 +57,6 @@ export function OnboardingForm() {
       }
       toast.success("Username set!")
       setStep(1)
-    })
-  }
-
-  function handleGithubSubmit() {
-    startTransition(async () => {
-      if (githubUsername.trim()) {
-        const result = await updateGithubUsername(githubUsername)
-        if (result?.error) {
-          toast.error(result.error)
-          return
-        }
-        toast.success("GitHub account linked!")
-      }
-      setStep(2)
     })
   }
 
@@ -153,28 +143,35 @@ export function OnboardingForm() {
           <CardHeader>
             <CardTitle className="font-heading">Connect GitHub</CardTitle>
             <CardDescription>
-              Link your GitHub account so others can find your work.
-              You can skip this and add it later in settings.
+              Link your GitHub account to import repositories, show your contributions, and let others find your work.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <Label htmlFor="github-username">GitHub Username</Label>
-              <div className="relative">
-                <Github className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="github-username"
-                  placeholder="e.g. octocat"
-                  value={githubUsername}
-                  onChange={(e) => setGithubUsername(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleGithubSubmit()}
-                  className="pl-9"
-                />
+            {isGithubConnected ? (
+              <div className="flex items-center gap-3 rounded-lg border border-uh-teal/30 bg-uh-teal/5 p-4">
+                <CheckCircle2 className="size-5 text-uh-teal" />
+                <div>
+                  <p className="text-sm font-medium">
+                    Connected as <span className="font-mono">@{githubUsername}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Your GitHub account is linked. You can manage this in settings.
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Your GitHub username will be linked to your profile.
-              </p>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                <Button asChild className="w-full" variant="outline" size="lg">
+                  <a href="/api/github/connect?returnTo=/onboarding">
+                    <Github className="mr-2 size-5" />
+                    Connect with GitHub
+                  </a>
+                </Button>
+                <p className="text-center text-xs text-muted-foreground">
+                  We only request read access to your public profile.
+                </p>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="justify-between">
             <Button variant="ghost" onClick={() => setStep(0)}>
@@ -182,14 +179,17 @@ export function OnboardingForm() {
               Back
             </Button>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(2)}>
-                Skip for now
-              </Button>
-              <Button onClick={handleGithubSubmit} disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-                Continue
-                <ArrowRight className="ml-2 size-4" />
-              </Button>
+              {!isGithubConnected && (
+                <Button variant="outline" onClick={() => setStep(2)}>
+                  Skip for now
+                </Button>
+              )}
+              {isGithubConnected && (
+                <Button onClick={() => setStep(2)}>
+                  Continue
+                  <ArrowRight className="ml-2 size-4" />
+                </Button>
+              )}
             </div>
           </CardFooter>
         </Card>

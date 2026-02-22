@@ -1,7 +1,10 @@
+import { Suspense } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { auth } from "@/auth"
 import { getProjectBySlug } from "@/lib/queries/projects"
+import { getGitHubToken } from "@/lib/github"
+import { refreshGitHubData } from "@/lib/actions/github"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,13 +23,27 @@ import {
   Settings,
   Github,
   CheckCircle2,
+  Loader2,
 } from "lucide-react"
 import { formatDate, getInitials } from "@/lib/utils"
 import { TIME_COMMITMENT_LABELS } from "@/lib/constants"
+import { GitHubStatsCard } from "@/components/projects/github-stats-card"
+import { GitHubReadme } from "@/components/projects/github-readme"
+import { GitHubIssues } from "@/components/projects/github-issues"
+import { GitHubCommits } from "@/components/projects/github-commits"
+import { GitHubContributors } from "@/components/projects/github-contributors"
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: "bg-uh-teal/10 text-uh-teal border-uh-teal/20",
   PAUSED: "bg-uh-gold/10 text-uh-gold border-uh-gold/20",
+}
+
+function GitHubLoading() {
+  return (
+    <div className="flex items-center justify-center py-8">
+      <Loader2 className="size-5 animate-spin text-muted-foreground" />
+    </div>
+  )
 }
 
 export default async function ProjectDetailPage({
@@ -44,6 +61,21 @@ export default async function ProjectDetailPage({
   }
 
   const isOwner = session?.user?.id === project.ownerId
+  const hasGitHubRepo = !!project.githubRepoOwner && !!project.githubRepoName
+
+  // Lazy refresh if stale (>1 hour)
+  if (hasGitHubRepo && project.githubSyncedAt) {
+    const staleMs = Date.now() - new Date(project.githubSyncedAt).getTime()
+    if (staleMs > 60 * 60 * 1000) {
+      refreshGitHubData(project.id).catch(console.error)
+    }
+  }
+
+  // Get token for live GitHub API calls
+  let githubToken: string | null = null
+  if (hasGitHubRepo) {
+    githubToken = await getGitHubToken(project.ownerId)
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -230,10 +262,60 @@ export default async function ProjectDetailPage({
               )}
             </div>
           </section>
+
+          {/* GitHub Content Sections */}
+          {hasGitHubRepo && (
+            <>
+              <Separator />
+
+              <Suspense fallback={<GitHubLoading />}>
+                <GitHubReadme
+                  owner={project.githubRepoOwner!}
+                  repo={project.githubRepoName!}
+                  token={githubToken}
+                />
+              </Suspense>
+
+              <Suspense fallback={<GitHubLoading />}>
+                <GitHubIssues
+                  owner={project.githubRepoOwner!}
+                  repo={project.githubRepoName!}
+                  token={githubToken}
+                />
+              </Suspense>
+
+              <Suspense fallback={<GitHubLoading />}>
+                <GitHubCommits
+                  owner={project.githubRepoOwner!}
+                  repo={project.githubRepoName!}
+                  token={githubToken}
+                />
+              </Suspense>
+
+              <Suspense fallback={<GitHubLoading />}>
+                <GitHubContributors
+                  owner={project.githubRepoOwner!}
+                  repo={project.githubRepoName!}
+                  token={githubToken}
+                />
+              </Suspense>
+            </>
+          )}
         </div>
 
         {/* Right column - sidebar */}
         <div className="space-y-6">
+          {/* GitHub Stats */}
+          {hasGitHubRepo && (
+            <GitHubStatsCard
+              stars={project.githubStars}
+              forks={project.githubForks}
+              openIssues={project.githubOpenIssues}
+              language={project.githubLanguage}
+              lastCommitAt={project.githubLastCommitAt}
+            />
+          )}
+
           {/* Time commitment */}
           <Card>
             <CardContent className="space-y-4 pt-0">

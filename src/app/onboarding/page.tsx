@@ -13,7 +13,7 @@ export default async function OnboardingPage() {
   // Check if user already completed onboarding
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { username: true },
+    select: { username: true, githubUsername: true },
   })
 
   if (user?.username) {
@@ -30,7 +30,7 @@ export default async function OnboardingPage() {
           Let&apos;s set up your profile in a few quick steps.
         </p>
       </div>
-      <OnboardingForm />
+      <OnboardingForm githubUsername={user?.githubUsername} />
     </div>
   )
 }

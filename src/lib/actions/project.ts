@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma"
 import { slugify } from "@/lib/utils"
 import { createProjectSchema, type CreateProjectInput } from "@/lib/validators/project"
 import { MemberRole } from "@/generated/prisma"
+import { parseGitHubRepoUrl, syncProjectGitHubData, getGitHubToken } from "@/lib/github"
 
 export async function createProject(data: CreateProjectInput) {
   const session = await auth()
@@ -27,6 +28,11 @@ export async function createProject(data: CreateProjectInput) {
     slug = `${slug}-${Date.now().toString(36)}`
   }
 
+  // Parse GitHub repo URL if provided
+  const repoInfo = projectData.githubRepoUrl
+    ? parseGitHubRepoUrl(projectData.githubRepoUrl)
+    : null
+
   const project = await prisma.project.create({
     data: {
       ...projectData,
@@ -34,6 +40,8 @@ export async function createProject(data: CreateProjectInput) {
       description: projectData.description,
       longDescription: projectData.longDescription || null,
       githubRepoUrl: projectData.githubRepoUrl || null,
+      githubRepoOwner: repoInfo?.owner ?? null,
+      githubRepoName: repoInfo?.repo ?? null,
       timeCommitment: projectData.timeCommitment as any,
       ownerId: session.user.id,
       roles: {
@@ -51,6 +59,15 @@ export async function createProject(data: CreateProjectInput) {
       },
     },
   })
+
+  // Sync GitHub data in background (don't block the response)
+  if (repoInfo) {
+    getGitHubToken(session.user.id).then((token) => {
+      syncProjectGitHubData(project.id, repoInfo.owner, repoInfo.repo, token).catch(
+        console.error
+      )
+    })
+  }
 
   revalidatePath("/projects")
   return { slug: project.slug }
@@ -82,6 +99,11 @@ export async function updateProject(projectId: string, data: CreateProjectInput)
 
   const { roles, status, ...projectData } = parsed.data
 
+  // Parse GitHub repo URL if provided
+  const repoInfo = projectData.githubRepoUrl
+    ? parseGitHubRepoUrl(projectData.githubRepoUrl)
+    : null
+
   // Delete existing roles and recreate
   await prisma.projectRole.deleteMany({ where: { projectId } })
 
@@ -91,6 +113,8 @@ export async function updateProject(projectId: string, data: CreateProjectInput)
       ...projectData,
       longDescription: projectData.longDescription || null,
       githubRepoUrl: projectData.githubRepoUrl || null,
+      githubRepoOwner: repoInfo?.owner ?? null,
+      githubRepoName: repoInfo?.repo ?? null,
       timeCommitment: projectData.timeCommitment as any,
       ...(status ? { status: status as any } : {}),
       roles: {
@@ -102,6 +126,15 @@ export async function updateProject(projectId: string, data: CreateProjectInput)
       },
     },
   })
+
+  // Sync GitHub data in background
+  if (repoInfo) {
+    getGitHubToken(session.user.id).then((token) => {
+      syncProjectGitHubData(projectId, repoInfo.owner, repoInfo.repo, token).catch(
+        console.error
+      )
+    })
+  }
 
   revalidatePath(`/projects/${project.slug}`)
   revalidatePath("/projects")
