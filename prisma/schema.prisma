@@ -20,19 +20,26 @@ model User {
   bio              String?  @db.Text
   uhEmail          String?  @unique
   uhEmailVerified  Boolean  @default(false)
-  githubUsername    String?  @unique
-  githubProfileUrl String?
-  skills           String[]
-  graduationYear   Int?
-  major            String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  githubUsername      String?  @unique
+  githubProfileUrl   String?
+  githubReposCount   Int?
+  githubTotalStars   Int?
+  githubFollowers    Int?
+  githubTopLanguages Json?
+  githubBio          String?  @db.Text
+  githubSyncedAt     DateTime?
+  skills             String[]
+  graduationYear     Int?
+  major              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   accounts      Account[]
   sessions      Session[]
   ownedProjects Project[]       @relation("ProjectOwner")
   applications  Application[]
   memberships   ProjectMember[]
+  featuredRepos FeaturedRepo[]
 
   @@map("users")
 }
@@ -217,4 +224,25 @@ model ProjectMember {
   @@unique([userId, projectId])
   @@index([projectId])
   @@map("project_members")
+}
+
+model FeaturedRepo {
+  id           String   @id @default(cuid())
+  userId       String
+  githubRepoId Int
+  name         String
+  fullName     String
+  htmlUrl      String
+  description  String?  @db.Text
+  language     String?
+  stars        Int      @default(0)
+  forks        Int      @default(0)
+  topics       String[]
+  displayOrder Int      @default(0)
+  syncedAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, githubRepoId])
+  @@map("featured_repos")
 }

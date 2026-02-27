@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, FolderGit2, FileText, Settings } from "lucide-react"
+import { LayoutDashboard, FolderGit2, FileText, Settings, Github } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/projects", label: "My Projects", icon: FolderGit2 },
+  { href: "/dashboard/repos", label: "Repos", icon: Github },
   { href: "/dashboard/applications", label: "Applications", icon: FileText },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]

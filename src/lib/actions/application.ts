@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { applicationSchema, type ApplicationInput } from "@/lib/validators/project"
-import { ApplicationStatus, MemberRole } from "@/generated/prisma"
+import { ApplicationStatus, MemberRole } from "@/generated/prisma/client"
 
 export async function applyToProject(projectId: string, data: ApplicationInput) {
   const session = await auth()

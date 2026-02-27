@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FolderGit2, FileText, ShieldCheck, Plus } from "lucide-react"
+import { FolderGit2, FileText, ShieldCheck, Plus, Github } from "lucide-react"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -19,12 +19,16 @@ export default async function DashboardPage() {
     redirect("/auth/signin")
   }
 
-  const [projectCount, applicationCount, user] = await Promise.all([
+  const [projectCount, applicationCount, user, githubAccount] = await Promise.all([
     prisma.project.count({ where: { ownerId: session.user.id } }),
     prisma.application.count({ where: { userId: session.user.id } }),
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { uhEmailVerified: true, name: true },
+      select: { uhEmailVerified: true, name: true, githubReposCount: true },
+    }),
+    prisma.account.findFirst({
+      where: { userId: session.user.id, provider: "github" },
+      select: { id: true },
     }),
   ])
 
@@ -63,7 +67,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -104,6 +108,27 @@ export default async function DashboardPage() {
             >
               {user?.uhEmailVerified ? "Verified" : "Not Verified"}
             </Badge>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              GitHub Repos
+            </CardTitle>
+            <Github className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {githubAccount ? (
+              <p className="text-2xl font-bold">
+                {user?.githubReposCount ?? 0}
+              </p>
+            ) : (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/api/github/connect?returnTo=/dashboard">
+                  Connect
+                </Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -150,6 +175,42 @@ export default async function DashboardPage() {
           </Card>
         )}
       </div>
+
+      {/* Your Repos */}
+      {githubAccount ? (
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-heading text-lg font-semibold">Your Repos</h2>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/repos">View all repos</Link>
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              <Github className="mx-auto mb-2 size-6" />
+              <p>Browse, feature, and post your repos for collaboration.</p>
+              <Button variant="outline" size="sm" className="mt-3" asChild>
+                <Link href="/dashboard/repos">Open Repos</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div>
+          <h2 className="mb-4 font-heading text-lg font-semibold">Your Repos</h2>
+          <Card>
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              <Github className="mx-auto mb-2 size-6" />
+              <p>Connect GitHub to browse your repos and post them for collaboration.</p>
+              <Button variant="outline" size="sm" className="mt-3" asChild>
+                <Link href="/api/github/connect?returnTo=/dashboard">
+                  Connect GitHub
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Recent Applications */}
       <div>

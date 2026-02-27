@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { cn, getInitials, formatDate } from "@/lib/utils"
 import { updateApplicationStatus } from "@/lib/actions/application"
-import { ApplicationStatus } from "@/generated/prisma"
+import { ApplicationStatus } from "@/generated/prisma/enums"
 
 interface ApplicationCardProps {
   application: {

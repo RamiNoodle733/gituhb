@@ -103,6 +103,20 @@ export interface GitHubCommit {
   author: { login: string; avatar_url: string } | null
 }
 
+export interface GitHubUserProfile {
+  login: string
+  html_url: string
+  avatar_url: string
+  bio: string | null
+  public_repos: number
+  followers: number
+  following: number
+}
+
+export async function fetchGitHubUserProfile(token: string): Promise<GitHubUserProfile> {
+  return githubFetch<GitHubUserProfile>("/user", token)
+}
+
 export async function fetchUserRepos(token: string): Promise<GitHubRepo[]> {
   return githubFetch<GitHubRepo[]>(
     "/user/repos?type=public&sort=updated&per_page=100",

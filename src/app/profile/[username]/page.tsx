@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { auth } from "@/auth"
 import { getProfile } from "@/lib/queries/profiles"
 import { formatDate, getInitials } from "@/lib/utils"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -12,6 +13,8 @@ import {
   CardContent,
 } from "@/components/ui/card"
 import { ProjectCard } from "@/components/projects/project-card"
+import { GitHubStats } from "@/components/profile/github-stats"
+import { FeaturedRepos } from "@/components/profile/featured-repos"
 import { Github, ShieldCheck, Calendar, GraduationCap } from "lucide-react"
 
 export default async function ProfilePage({
@@ -20,11 +23,16 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>
 }) {
   const { username } = await params
-  const user = await getProfile(username)
+  const [session, user] = await Promise.all([
+    auth(),
+    getProfile(username),
+  ])
 
   if (!user) {
     notFound()
   }
+
+  const isOwnProfile = session?.user?.id === user.id
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -104,6 +112,27 @@ export default async function ProfilePage({
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* GitHub Stats */}
+          {user.githubUsername && (
+            <GitHubStats
+              username={user.githubUsername}
+              profileUrl={user.githubProfileUrl}
+              reposCount={user.githubReposCount}
+              totalStars={user.githubTotalStars}
+              followers={user.githubFollowers}
+              topLanguages={user.githubTopLanguages}
+              bio={user.githubBio}
+            />
+          )}
+
+          {/* Featured Repos */}
+          {user.githubUsername && (
+            <FeaturedRepos
+              repos={user.featuredRepos}
+              isOwnProfile={isOwnProfile}
+            />
           )}
 
           {/* Projects */}

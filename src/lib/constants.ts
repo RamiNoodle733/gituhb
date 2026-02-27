@@ -26,3 +26,19 @@ export const TIME_COMMITMENT_LABELS: Record<string, string> = {
   TEN_TO_TWENTY: "10-20 hrs/week",
   TWENTY_PLUS: "20+ hrs/week",
 }
+
+/** Maps GitHub repository languages to our TECH_STACK_OPTIONS values */
+export const LANGUAGE_TO_TECH: Record<string, string> = {
+  JavaScript: "JavaScript",
+  TypeScript: "TypeScript",
+  Python: "Python",
+  Java: "Java",
+  "C++": "C++",
+  "C#": "C#",
+  Go: "Go",
+  Rust: "Rust",
+  Swift: "Swift",
+  Kotlin: "Kotlin",
+  HTML: "React",
+  CSS: "Tailwind CSS",
+}

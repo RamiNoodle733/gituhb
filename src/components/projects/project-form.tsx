@@ -31,8 +31,8 @@ import {
   type CreateProjectInput,
 } from "@/lib/validators/project"
 import { createProject, updateProject } from "@/lib/actions/project"
-import { TECH_STACK_OPTIONS, TAG_OPTIONS, TIME_COMMITMENT_LABELS } from "@/lib/constants"
-import { ProjectStatus } from "@/generated/prisma"
+import { TECH_STACK_OPTIONS, TAG_OPTIONS, TIME_COMMITMENT_LABELS, LANGUAGE_TO_TECH } from "@/lib/constants"
+import { ProjectStatus } from "@/generated/prisma/enums"
 import { RepoPickerDialog } from "@/components/projects/repo-picker-dialog"
 
 interface ProjectFormProps {
@@ -40,21 +40,6 @@ interface ProjectFormProps {
   initialData?: CreateProjectInput
   projectId?: string
   githubConnected?: boolean
-}
-
-const LANGUAGE_TO_TECH: Record<string, string> = {
-  JavaScript: "JavaScript",
-  TypeScript: "TypeScript",
-  Python: "Python",
-  Java: "Java",
-  "C++": "C++",
-  "C#": "C#",
-  Go: "Go",
-  Rust: "Rust",
-  Swift: "Swift",
-  Kotlin: "Kotlin",
-  HTML: "React",
-  CSS: "Tailwind CSS",
 }
 
 export function ProjectForm({ mode, initialData, projectId, githubConnected }: ProjectFormProps) {

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Clock, Users } from "lucide-react"
+import { Clock, Users, Github, Star, GitFork } from "lucide-react"
 
 import {
   Card,
@@ -28,6 +28,9 @@ type ProjectCardProps = {
       image: string | null
       username: string | null
     }
+    githubStars?: number | null
+    githubForks?: number | null
+    githubLanguage?: string | null
     roles: {
       id: string
       title: string
@@ -93,6 +96,25 @@ export function ProjectCard({ project }: ProjectCardProps) {
             </Badge>
           )}
         </div>
+        {project.githubStars != null && (
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <Github className="size-3" />
+            <span className="flex items-center gap-1">
+              <Star className="size-3" />
+              {project.githubStars.toLocaleString()}
+            </span>
+            <span className="flex items-center gap-1">
+              <GitFork className="size-3" />
+              {(project.githubForks ?? 0).toLocaleString()}
+            </span>
+            {project.githubLanguage && (
+              <span className="flex items-center gap-1">
+                <span className="size-2 rounded-full bg-current" />
+                {project.githubLanguage}
+              </span>
+            )}
+          </div>
+        )}
       </CardContent>
 
       <CardFooter className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
