@@ -39,6 +39,5 @@ export const LANGUAGE_TO_TECH: Record<string, string> = {
   Rust: "Rust",
   Swift: "Swift",
   Kotlin: "Kotlin",
-  HTML: "React",
-  CSS: "Tailwind CSS",
+  Dart: "Flutter",
 }

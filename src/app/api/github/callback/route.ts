@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
+import { fetchGitHubUserProfile, fetchUserRepos } from "@/lib/github"
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -115,14 +116,51 @@ export async function GET(request: Request) {
     },
   })
 
-  // Update the User record with GitHub info
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: {
-      githubUsername: githubUser.login,
-      githubProfileUrl: githubUser.html_url,
-    },
-  })
+  // Sync GitHub user stats (repos, stars, followers, languages)
+  // Do this at connect time so profile + dashboard have data immediately
+  try {
+    const [profile, repos] = await Promise.all([
+      fetchGitHubUserProfile(access_token),
+      fetchUserRepos(access_token),
+    ])
+
+    const publicRepos = repos.filter((r) => !r.private)
+    const totalStars = publicRepos.reduce((sum, r) => sum + r.stargazers_count, 0)
+
+    const langCounts: Record<string, number> = {}
+    for (const repo of publicRepos) {
+      if (repo.language) {
+        langCounts[repo.language] = (langCounts[repo.language] || 0) + 1
+      }
+    }
+    const topLanguages = Object.entries(langCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([lang]) => lang)
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        githubUsername: profile.login,
+        githubProfileUrl: profile.html_url,
+        githubBio: profile.bio,
+        githubReposCount: publicRepos.length,
+        githubTotalStars: totalStars,
+        githubFollowers: profile.followers,
+        githubTopLanguages: topLanguages,
+        githubSyncedAt: new Date(),
+      },
+    })
+  } catch {
+    // Stats sync failed -- still save basic info so the link isn't lost
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        githubUsername: githubUser.login,
+        githubProfileUrl: githubUser.html_url,
+      },
+    })
+  }
 
   // Clear the OAuth state cookie
   const response = NextResponse.redirect(

@@ -189,6 +189,17 @@ export async function quickCreateProject(data: {
     return { error: "You must be signed in to create a project." }
   }
 
+  // Validate roles
+  if (!data.roles.length || data.roles.some((r) => !r.title.trim())) {
+    return { error: "At least one role with a title is required." }
+  }
+
+  // Validate time commitment
+  const validCommitments = ["LESS_THAN_5", "FIVE_TO_TEN", "TEN_TO_TWENTY", "TWENTY_PLUS"]
+  if (!validCommitments.includes(data.timeCommitment)) {
+    return { error: "Invalid time commitment." }
+  }
+
   // Generate title from repo name (e.g. "my-cool-repo" -> "My Cool Repo")
   const title = data.repoName
     .replace(/-/g, " ")
@@ -223,46 +234,51 @@ export async function quickCreateProject(data: {
   // Parse repo URL
   const repoInfo = parseGitHubRepoUrl(data.repoUrl)
 
-  const project = await prisma.project.create({
-    data: {
-      title,
-      slug,
-      description: data.repoDescription || `A project built with ${data.repoLanguage || "code"}.`,
-      githubRepoUrl: data.repoUrl,
-      githubRepoOwner: repoInfo?.owner ?? null,
-      githubRepoName: repoInfo?.repo ?? null,
-      githubRepoId: data.repoId,
-      timeCommitment: data.timeCommitment as any,
-      techStack,
-      tags,
-      ownerId: session.user.id,
-      roles: {
-        create: data.roles.map((role) => ({
-          title: role.title,
-          description: role.description || null,
-          count: role.count,
-        })),
-      },
-      members: {
-        create: {
-          userId: session.user.id,
-          role: MemberRole.OWNER,
+  try {
+    const project = await prisma.project.create({
+      data: {
+        title,
+        slug,
+        description: data.repoDescription || `A project built with ${data.repoLanguage || "code"}.`,
+        githubRepoUrl: data.repoUrl,
+        githubRepoOwner: repoInfo?.owner ?? null,
+        githubRepoName: repoInfo?.repo ?? null,
+        githubRepoId: data.repoId,
+        timeCommitment: data.timeCommitment as any,
+        techStack,
+        tags,
+        ownerId: session.user.id,
+        roles: {
+          create: data.roles.map((role) => ({
+            title: role.title,
+            description: role.description || null,
+            count: role.count,
+          })),
+        },
+        members: {
+          create: {
+            userId: session.user.id,
+            role: MemberRole.OWNER,
+          },
         },
       },
-    },
-  })
-
-  // Sync GitHub data in background
-  if (repoInfo) {
-    getGitHubToken(session.user.id).then((token) => {
-      syncProjectGitHubData(project.id, repoInfo.owner, repoInfo.repo, token).catch(
-        console.error
-      )
     })
-  }
 
-  revalidatePath("/projects")
-  revalidatePath("/dashboard/projects")
-  revalidatePath("/dashboard/repos")
-  return { slug: project.slug }
+    // Sync GitHub data in background
+    if (repoInfo) {
+      getGitHubToken(session.user.id).then((token) => {
+        syncProjectGitHubData(project.id, repoInfo.owner, repoInfo.repo, token).catch(
+          console.error
+        )
+      })
+    }
+
+    revalidatePath("/projects")
+    revalidatePath("/dashboard/projects")
+    revalidatePath("/dashboard/repos")
+    return { slug: project.slug }
+  } catch (err) {
+    console.error("quickCreateProject error:", err)
+    return { error: "Failed to create project. Please try again." }
+  }
 }
