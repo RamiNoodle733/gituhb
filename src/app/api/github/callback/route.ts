@@ -4,9 +4,10 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const code = searchParams.get("code")
-  const stateParam = searchParams.get("state")
+  const requestUrl = new URL(request.url)
+  const origin = requestUrl.origin
+  const code = requestUrl.searchParams.get("code")
+  const stateParam = requestUrl.searchParams.get("state")
 
   // Read and parse the OAuth state cookie
   const cookieStore = await cookies()
@@ -28,14 +29,14 @@ export async function GET(request: Request) {
   // Verify the state parameter matches
   if (!stateParam || !expectedState || stateParam !== expectedState) {
     return NextResponse.redirect(
-      new URL(`${returnTo}?error=invalid_state`, process.env.NEXT_PUBLIC_APP_URL!)
+      new URL(`${returnTo}?error=invalid_state`, origin)
     )
   }
 
   // Verify we have a code
   if (!code) {
     return NextResponse.redirect(
-      new URL(`${returnTo}?error=missing_code`, process.env.NEXT_PUBLIC_APP_URL!)
+      new URL(`${returnTo}?error=missing_code`, origin)
     )
   }
 
@@ -44,7 +45,7 @@ export async function GET(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.redirect(
-      new URL(`${returnTo}?error=unauthorized`, process.env.NEXT_PUBLIC_APP_URL!)
+      new URL(`${returnTo}?error=unauthorized`, origin)
     )
   }
 
@@ -58,8 +59,8 @@ export async function GET(request: Request) {
         Accept: "application/json",
       },
       body: JSON.stringify({
-        client_id: process.env.GITHUB_CLIENT_ID!,
-        client_secret: process.env.GITHUB_CLIENT_SECRET!,
+        client_id: process.env.AUTH_GITHUB_ID!,
+        client_secret: process.env.AUTH_GITHUB_SECRET!,
         code,
       }),
     }
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
 
   if (tokenData.error || !tokenData.access_token) {
     return NextResponse.redirect(
-      new URL(`${returnTo}?error=token_exchange_failed`, process.env.NEXT_PUBLIC_APP_URL!)
+      new URL(`${returnTo}?error=token_exchange_failed`, origin)
     )
   }
 
@@ -85,7 +86,7 @@ export async function GET(request: Request) {
 
   if (!githubUserResponse.ok) {
     return NextResponse.redirect(
-      new URL(`${returnTo}?error=github_fetch_failed`, process.env.NEXT_PUBLIC_APP_URL!)
+      new URL(`${returnTo}?error=github_fetch_failed`, origin)
     )
   }
 
@@ -125,7 +126,7 @@ export async function GET(request: Request) {
 
   // Clear the OAuth state cookie
   const response = NextResponse.redirect(
-    new URL(`${returnTo}?github=connected`, process.env.NEXT_PUBLIC_APP_URL!)
+    new URL(`${returnTo}?github=connected`, origin)
   )
 
   response.cookies.set("github_oauth_state", "", {

@@ -15,11 +15,13 @@ export async function GET(request: Request) {
 
   const cookiePayload = JSON.stringify({ state, returnTo })
 
+  const origin = new URL(request.url).origin
+
   const redirectUrl = new URL("https://github.com/login/oauth/authorize")
-  redirectUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!)
+  redirectUrl.searchParams.set("client_id", process.env.AUTH_GITHUB_ID!)
   redirectUrl.searchParams.set(
     "redirect_uri",
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/github/callback`
+    `${origin}/api/github/callback`
   )
   redirectUrl.searchParams.set("scope", "read:user")
   redirectUrl.searchParams.set("state", state)
