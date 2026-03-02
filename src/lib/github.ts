@@ -40,7 +40,7 @@ async function githubFetch<T>(
 
   const res = await fetch(`${GITHUB_API}${path}`, {
     headers,
-    next: { revalidate: 0 },
+    next: { revalidate: 300 },
   })
 
   if (!res.ok) {
@@ -157,7 +157,7 @@ export async function fetchRepoReadme(
 
   const res = await fetch(`${GITHUB_API}/repos/${owner}/${repo}/readme`, {
     headers,
-    next: { revalidate: 0 },
+    next: { revalidate: 300 },
   })
 
   if (!res.ok) {

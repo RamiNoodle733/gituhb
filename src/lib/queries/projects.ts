@@ -16,7 +16,7 @@ export async function getProjects({ page = 1 }: { page?: number } = {}) {
           select: { id: true, title: true, filled: true },
         },
         _count: {
-          select: { members: true },
+          select: { members: true, votes: true },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -64,6 +64,17 @@ export async function getProjectBySlug(slug: string) {
         },
         orderBy: { createdAt: "desc" },
       },
+      comments: {
+        include: {
+          user: {
+            select: { id: true, name: true, username: true, image: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      _count: {
+        select: { votes: true, members: true },
+      },
     },
   })
 }
@@ -94,7 +105,7 @@ export async function getFeaturedProjects() {
         select: { id: true, title: true, filled: true },
       },
       _count: {
-        select: { members: true },
+        select: { members: true, votes: true },
       },
     },
     orderBy: { createdAt: "desc" },

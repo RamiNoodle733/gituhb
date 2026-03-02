@@ -41,9 +41,41 @@ export async function getProfile(username: string) {
         where: { status: "ACTIVE" },
         include: {
           roles: { select: { id: true, title: true, filled: true } },
-          _count: { select: { members: true } },
+          _count: { select: { members: true, votes: true } },
         },
         orderBy: { createdAt: "desc" },
+      },
+      votes: {
+        select: {
+          id: true,
+          createdAt: true,
+          project: {
+            select: { title: true, slug: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      },
+      comments: {
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          project: {
+            select: { title: true, slug: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      },
+      memberships: {
+        select: {
+          id: true,
+          role: true,
+          project: {
+            select: { title: true, slug: true },
+          },
+        },
       },
     },
   })

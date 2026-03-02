@@ -7,6 +7,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter,
 } from "@/components/ui/card"
 import { Logo } from "@/components/ui/logo"
 import { GraduationCap } from "lucide-react"
@@ -26,7 +27,8 @@ export default async function SignInPage() {
           </div>
           <CardTitle className="font-heading text-2xl">Sign in to GitUHb</CardTitle>
           <CardDescription>
-            Sign in with your UH Microsoft 365 account to start collaborating.
+            Use your University of Houston Microsoft 365 account
+            (@uh.edu or @cougarnet.uh.edu) to sign in.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -42,6 +44,10 @@ export default async function SignInPage() {
             </Button>
           </form>
         </CardContent>
+        <CardFooter className="flex-col gap-2 text-center text-xs text-muted-foreground">
+          <p>After signing in, connect your GitHub to start collaborating.</p>
+          <p>Only UH students can create and join projects.</p>
+        </CardFooter>
       </Card>
     </div>
   )

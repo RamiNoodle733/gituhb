@@ -40,6 +40,8 @@ model User {
   applications  Application[]
   memberships   ProjectMember[]
   featuredRepos FeaturedRepo[]
+  comments      Comment[]
+  votes         ProjectVote[]
 
   @@map("users")
 }
@@ -146,6 +148,8 @@ model Project {
   roles        ProjectRole[]
   members      ProjectMember[]
   applications Application[]
+  comments     Comment[]
+  votes        ProjectVote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -245,4 +249,32 @@ model FeaturedRepo {
 
   @@unique([userId, githubRepoId])
   @@map("featured_repos")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  userId    String
+  projectId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([userId])
+  @@map("comments")
+}
+
+model ProjectVote {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, projectId])
+  @@index([projectId])
+  @@map("project_votes")
 }

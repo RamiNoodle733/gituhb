@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Star, ArrowBigUp, Users } from "lucide-react"
 import { getInitials } from "@/lib/utils"
 
 type ProjectCardProps = {
@@ -20,10 +21,15 @@ type ProjectCardProps = {
     techStack: string[]
     status: string
     githubLanguage?: string | null
+    githubStars?: number | null
     owner: {
       name: string | null
       image: string | null
       username: string | null
+    }
+    _count?: {
+      members?: number
+      votes?: number
     }
   }
 }
@@ -67,21 +73,43 @@ export function ProjectCard({ project }: ProjectCardProps) {
       </CardContent>
 
       <CardFooter className="text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <Avatar size="sm">
-            {project.owner.image && (
-              <AvatarImage
-                src={project.owner.image}
-                alt={project.owner.name ?? "Owner"}
-              />
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Avatar className="size-5">
+              {project.owner.image && (
+                <AvatarImage
+                  src={project.owner.image}
+                  alt={project.owner.name ?? "Owner"}
+                />
+              )}
+              <AvatarFallback className="text-[10px]">
+                {getInitials(project.owner.name ?? "?")}
+              </AvatarFallback>
+            </Avatar>
+            <span className="truncate text-xs">
+              {project.owner.name ?? project.owner.username}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            {project.githubStars != null && project.githubStars > 0 && (
+              <span className="flex items-center gap-1">
+                <Star className="size-3" />
+                {project.githubStars}
+              </span>
             )}
-            <AvatarFallback>
-              {getInitials(project.owner.name ?? "?")}
-            </AvatarFallback>
-          </Avatar>
-          <span className="truncate text-xs">
-            {project.owner.name ?? project.owner.username}
-          </span>
+            {project._count?.votes != null && project._count.votes > 0 && (
+              <span className="flex items-center gap-1">
+                <ArrowBigUp className="size-3" />
+                {project._count.votes}
+              </span>
+            )}
+            {project._count?.members != null && project._count.members > 0 && (
+              <span className="flex items-center gap-1">
+                <Users className="size-3" />
+                {project._count.members}
+              </span>
+            )}
+          </div>
         </div>
       </CardFooter>
     </Card>
