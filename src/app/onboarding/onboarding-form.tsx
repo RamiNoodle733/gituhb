@@ -3,11 +3,10 @@
 import { useState, useEffect, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
-import { Loader2, Check, ArrowRight, ArrowLeft, Github, CheckCircle2 } from "lucide-react"
+import { Loader2, Check, ArrowRight, Github } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import {
   Card,
@@ -17,11 +16,9 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card"
-import { TagInput } from "@/components/ui/tag-input"
-import { updateUsername, updateProfile } from "@/lib/actions/profile"
-import { TECH_STACK_OPTIONS } from "@/lib/constants"
+import { updateUsername } from "@/lib/actions/profile"
 
-const STEPS = ["Connect GitHub", "Choose Username", "Complete Profile"]
+const STEPS = ["Connect GitHub", "Choose Username"]
 
 interface OnboardingFormProps {
   githubUsername?: string | null
@@ -33,18 +30,10 @@ export function OnboardingForm({ githubUsername }: OnboardingFormProps) {
   const [step, setStep] = useState(0)
   const [isPending, startTransition] = useTransition()
 
-  // Step 1 state
   const [username, setUsername] = useState("")
-
-  // Step 2 state
-  const [bio, setBio] = useState("")
-  const [skills, setSkills] = useState<string[]>([])
-  const [major, setMajor] = useState("")
-  const [graduationYear, setGraduationYear] = useState("")
 
   const isGithubConnected = !!githubUsername || searchParams.get("github") === "connected"
 
-  // Auto-advance past GitHub step if already connected
   useEffect(() => {
     if (step === 0 && isGithubConnected) {
       setStep(1)
@@ -62,24 +51,7 @@ export function OnboardingForm({ githubUsername }: OnboardingFormProps) {
         toast.error(result.error)
         return
       }
-      toast.success("Username set!")
-      setStep(2)
-    })
-  }
-
-  function handleProfileSubmit() {
-    startTransition(async () => {
-      const result = await updateProfile({
-        bio: bio || undefined,
-        skills,
-        major: major || undefined,
-        graduationYear: graduationYear ? parseInt(graduationYear, 10) : undefined,
-      })
-      if (result?.error) {
-        toast.error(result.error)
-        return
-      }
-      toast.success("Profile complete!")
+      toast.success("You're all set!")
       router.push("/dashboard")
       router.refresh()
     })
@@ -144,7 +116,7 @@ export function OnboardingForm({ githubUsername }: OnboardingFormProps) {
           <CardHeader>
             <CardTitle className="font-heading">Choose a Username</CardTitle>
             <CardDescription>
-              Pick a unique username for your GitUHb profile. This will be part of your profile URL.
+              Pick a unique username for your GitUHb profile.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -165,72 +137,8 @@ export function OnboardingForm({ githubUsername }: OnboardingFormProps) {
           <CardFooter className="justify-end">
             <Button onClick={handleUsernameSubmit} disabled={isPending}>
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Continue
+              Get Started
               <ArrowRight className="ml-2 size-4" />
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
-
-      {/* Step 2: Profile */}
-      {step === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-heading">Complete Your Profile</CardTitle>
-            <CardDescription>
-              Tell others about yourself. All fields are optional.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                placeholder="A short bio about yourself..."
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                className="min-h-20"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Skills</Label>
-              <TagInput
-                value={skills}
-                onChange={setSkills}
-                options={TECH_STACK_OPTIONS}
-                placeholder="Add your skills..."
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="major">Major</Label>
-                <Input
-                  id="major"
-                  placeholder="e.g. Computer Science"
-                  value={major}
-                  onChange={(e) => setMajor(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gradYear">Graduation Year</Label>
-                <Input
-                  id="gradYear"
-                  type="number"
-                  placeholder="e.g. 2026"
-                  value={graduationYear}
-                  onChange={(e) => setGraduationYear(e.target.value)}
-                />
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="justify-between">
-            <Button variant="ghost" onClick={() => setStep(1)}>
-              <ArrowLeft className="mr-2 size-4" />
-              Back
-            </Button>
-            <Button onClick={handleProfileSubmit} disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Finish Setup
             </Button>
           </CardFooter>
         </Card>

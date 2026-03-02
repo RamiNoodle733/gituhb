@@ -124,24 +124,14 @@ export function ProjectForm({ mode, initialData, projectId, githubConnected }: P
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* Import from GitHub */}
         {githubConnected && (
-          <div className="rounded-lg border border-dashed p-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium">Import from GitHub</p>
-                <p className="text-xs text-muted-foreground">
-                  Select a repository to auto-fill project details.
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setRepoPickerOpen(true)}
-              >
-                <Github className="mr-2 size-4" />
-                Select Repo
-              </Button>
-            </div>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setRepoPickerOpen(true)}
+          >
+            <Github className="mr-2 size-4" />
+            Import from GitHub Repo
+          </Button>
         )}
 
         <RepoPickerDialog

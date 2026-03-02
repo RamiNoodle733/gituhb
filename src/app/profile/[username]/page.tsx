@@ -1,21 +1,15 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { auth } from "@/auth"
 import { getProfile } from "@/lib/queries/profiles"
-import { formatDate, getInitials } from "@/lib/utils"
+import { getInitials } from "@/lib/utils"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
 } from "@/components/ui/card"
 import { ProjectCard } from "@/components/projects/project-card"
-import { GitHubStats } from "@/components/profile/github-stats"
-import { FeaturedRepos } from "@/components/profile/featured-repos"
-import { Github, ShieldCheck, Calendar, GraduationCap } from "lucide-react"
+import { Github, ShieldCheck, GraduationCap } from "lucide-react"
 
 export default async function ProfilePage({
   params,
@@ -23,16 +17,11 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>
 }) {
   const { username } = await params
-  const [session, user] = await Promise.all([
-    auth(),
-    getProfile(username),
-  ])
+  const user = await getProfile(username)
 
   if (!user) {
     notFound()
   }
-
-  const isOwnProfile = session?.user?.id === user.id
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -87,76 +76,30 @@ export default async function ProfilePage({
                 {user.graduationYear && ` '${user.graduationYear.toString().slice(-2)}`}
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <Calendar className="size-4" />
-              Joined {formatDate(user.createdAt)}
-            </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex-1 space-y-6">
-          {/* Skills */}
-          {user.skills.length > 0 && (
+        <div className="flex-1">
+          <h2 className="mb-4 font-heading text-lg font-semibold">
+            Projects ({user.ownedProjects.length})
+          </h2>
+          {user.ownedProjects.length > 0 ? (
+            <div className="grid gap-4">
+              {user.ownedProjects.map((project) => (
+                <ProjectCard key={project.id} project={{
+                  ...project,
+                  owner: { name: user.name, image: user.image, username: user.username },
+                }} />
+              ))}
+            </div>
+          ) : (
             <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-lg">Skills</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {user.skills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="font-mono text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                No public projects yet.
               </CardContent>
             </Card>
           )}
-
-          {/* GitHub Stats */}
-          {user.githubUsername && (
-            <GitHubStats
-              username={user.githubUsername}
-              profileUrl={user.githubProfileUrl}
-              reposCount={user.githubReposCount}
-              totalStars={user.githubTotalStars}
-              followers={user.githubFollowers}
-              topLanguages={user.githubTopLanguages}
-              bio={user.githubBio}
-            />
-          )}
-
-          {/* Featured Repos */}
-          {user.githubUsername && (
-            <FeaturedRepos
-              repos={user.featuredRepos}
-              isOwnProfile={isOwnProfile}
-            />
-          )}
-
-          {/* Projects */}
-          <div>
-            <h2 className="mb-4 font-heading text-lg font-semibold">
-              Projects ({user.ownedProjects.length})
-            </h2>
-            {user.ownedProjects.length > 0 ? (
-              <div className="grid gap-4">
-                {user.ownedProjects.map((project) => (
-                  <ProjectCard key={project.id} project={{
-                    ...project,
-                    owner: { name: user.name, image: user.image, username: user.username },
-                  }} />
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                  No public projects yet.
-                </CardContent>
-              </Card>
-            )}
-          </div>
         </div>
       </div>
     </div>

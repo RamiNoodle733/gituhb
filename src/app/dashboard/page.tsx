@@ -58,18 +58,16 @@ export default async function DashboardPage() {
       </div>
 
       {/* Post a Repo CTA */}
-      <Card className="border-primary/20 bg-primary/5">
+      <Card>
         <CardContent className="flex flex-col items-center gap-4 py-6 sm:flex-row sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-              <Github className="size-5 text-primary" />
-            </div>
+            <Github className="size-5 shrink-0 text-muted-foreground" />
             <div>
               <p className="font-heading font-semibold">Post a project from your repos</p>
               <p className="text-sm text-muted-foreground">
                 {githubAccount
-                  ? "Select a GitHub repo and find collaborators in seconds."
-                  : "Connect GitHub to browse your repos and post them for collaboration."}
+                  ? "Select a repo and find collaborators in seconds."
+                  : "Connect GitHub to post repos for collaboration."}
               </p>
             </div>
           </div>

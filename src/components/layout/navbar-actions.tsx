@@ -58,93 +58,92 @@ export function NavbarActions({ user }: NavbarActionsProps) {
         <span className="sr-only">Toggle theme</span>
       </Button>
 
+      {/* Desktop: dropdown for auth'd, sign-in button for unauth'd */}
       {user ? (
-        <>
-          {/* Desktop dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild className="hidden md:flex">
-              <Button variant="ghost" className="relative size-9 rounded-full">
-                <Avatar className="size-9">
-                  {user.image && (
-                    <AvatarImage src={user.image} alt={user.name ?? "User"} />
-                  )}
-                  <AvatarFallback>
-                    {getInitials(user.name ?? "U")}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <div className="px-2 py-1.5">
-                <p className="text-sm font-medium">{user.name ?? "User"}</p>
-                {user.username && (
-                  <p className="text-xs text-muted-foreground">
-                    @{user.username}
-                  </p>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild className="hidden md:flex">
+            <Button variant="ghost" className="relative size-9 rounded-full">
+              <Avatar className="size-9">
+                {user.image && (
+                  <AvatarImage src={user.image} alt={user.name ?? "User"} />
                 )}
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard">
-                  <LayoutDashboard className="mr-2 size-4" />
-                  Dashboard
-                </Link>
-              </DropdownMenuItem>
+                <AvatarFallback>
+                  {getInitials(user.name ?? "U")}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <div className="px-2 py-1.5">
+              <p className="text-sm font-medium">{user.name ?? "User"}</p>
               {user.username && (
-                <DropdownMenuItem asChild>
-                  <Link href={`/profile/${user.username}`}>
-                    <User className="mr-2 size-4" />
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
+                <p className="text-xs text-muted-foreground">
+                  @{user.username}
+                </p>
               )}
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard">
+                <LayoutDashboard className="mr-2 size-4" />
+                Dashboard
+              </Link>
+            </DropdownMenuItem>
+            {user.username && (
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">
-                  <Settings className="mr-2 size-4" />
-                  Settings
+                <Link href={`/profile/${user.username}`}>
+                  <User className="mr-2 size-4" />
+                  Profile
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
-                <LogOut className="mr-2 size-4" />
-                Sign Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings">
+                <Settings className="mr-2 size-4" />
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
+              <LogOut className="mr-2 size-4" />
+              Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Button asChild size="sm" className="hidden md:inline-flex">
+          <Link href="/auth/signin">Sign In</Link>
+        </Button>
+      )}
 
-          {/* Mobile menu */}
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon" className="size-9">
-                <Menu className="size-5" />
-                <span className="sr-only">Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-64">
-              <SheetTitle className="font-heading">
-                Git<span className="text-primary">UH</span>b
-              </SheetTitle>
-              <nav className="mt-6 flex flex-col gap-3">
+      {/* Mobile menu — single Sheet for both auth states */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild className="md:hidden">
+          <Button variant="ghost" size="icon" className="size-9">
+            <Menu className="size-5" />
+            <span className="sr-only">Menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-64">
+          <SheetTitle className="font-heading">
+            Git<span className="text-primary">UH</span>b
+          </SheetTitle>
+          <nav className="mt-6 flex flex-col gap-3">
+            <Link
+              href="/projects"
+              onClick={() => setOpen(false)}
+              className="text-sm font-medium"
+            >
+              Projects
+            </Link>
+            {user ? (
+              <>
                 <Link
                   href="/dashboard/repos"
                   onClick={() => setOpen(false)}
                   className="text-sm font-medium"
                 >
                   My Repos
-                </Link>
-                <Link
-                  href="/projects"
-                  onClick={() => setOpen(false)}
-                  className="text-sm font-medium"
-                >
-                  Projects
-                </Link>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setOpen(false)}
-                  className="text-sm font-medium"
-                >
-                  Dashboard
                 </Link>
                 {user.username && (
                   <Link
@@ -168,37 +167,8 @@ export function NavbarActions({ user }: NavbarActionsProps) {
                 >
                   Sign Out
                 </button>
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </>
-      ) : (
-        <Button asChild size="sm" className="hidden md:inline-flex">
-          <Link href="/auth/signin">Sign In</Link>
-        </Button>
-      )}
-
-      {/* Mobile sign in when not logged in */}
-      {!user && (
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon" className="size-9">
-              <Menu className="size-5" />
-              <span className="sr-only">Menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-64">
-            <SheetTitle className="font-heading">
-              Git<span className="text-primary">UH</span>b
-            </SheetTitle>
-            <nav className="mt-6 flex flex-col gap-3">
-              <Link
-                href="/projects"
-                onClick={() => setOpen(false)}
-                className="text-sm font-medium"
-              >
-                Projects
-              </Link>
+              </>
+            ) : (
               <Link
                 href="/auth/signin"
                 onClick={() => setOpen(false)}
@@ -206,10 +176,10 @@ export function NavbarActions({ user }: NavbarActionsProps) {
               >
                 Sign In
               </Link>
-            </nav>
-          </SheetContent>
-        </Sheet>
-      )}
+            )}
+          </nav>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
