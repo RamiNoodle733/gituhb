@@ -1,13 +1,12 @@
 import Link from "next/link"
+import { Logo } from "@/components/ui/logo"
 
 export function Footer() {
   return (
     <footer className="border-t bg-background">
       <div className="container mx-auto flex flex-col items-center gap-4 px-4 py-8 md:flex-row md:justify-between">
-        <div className="flex items-center gap-2">
-          <span className="font-heading text-lg font-bold">
-            Git<span className="text-primary">UH</span>b
-          </span>
+        <div className="flex items-center gap-3">
+          <Logo size="sm" linked={false} />
           <span className="text-sm text-muted-foreground">
             Built for Coogs
           </span>

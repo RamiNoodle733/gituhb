@@ -9,6 +9,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card"
+import { Logo } from "@/components/ui/logo"
 import { GraduationCap } from "lucide-react"
 
 export default async function SignInPage() {
@@ -21,8 +22,8 @@ export default async function SignInPage() {
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mb-4 font-heading text-3xl font-bold">
-            Git<span className="text-primary">UH</span>b
+          <div className="mb-4 flex justify-center">
+            <Logo size="md" linked={false} />
           </div>
           <CardTitle className="font-heading text-2xl">Sign in to GitUHb</CardTitle>
           <CardDescription>

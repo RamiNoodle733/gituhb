@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { Loader2, Check, ArrowRight, ArrowLeft, Github, CheckCircle2 } from "lucide-react"
@@ -21,7 +21,7 @@ import { TagInput } from "@/components/ui/tag-input"
 import { updateUsername, updateProfile } from "@/lib/actions/profile"
 import { TECH_STACK_OPTIONS } from "@/lib/constants"
 
-const STEPS = ["Username", "GitHub", "Profile"]
+const STEPS = ["Connect GitHub", "Choose Username", "Complete Profile"]
 
 interface OnboardingFormProps {
   githubUsername?: string | null
@@ -36,13 +36,20 @@ export function OnboardingForm({ githubUsername }: OnboardingFormProps) {
   // Step 1 state
   const [username, setUsername] = useState("")
 
-  // Step 3 state
+  // Step 2 state
   const [bio, setBio] = useState("")
   const [skills, setSkills] = useState<string[]>([])
   const [major, setMajor] = useState("")
   const [graduationYear, setGraduationYear] = useState("")
 
   const isGithubConnected = !!githubUsername || searchParams.get("github") === "connected"
+
+  // Auto-advance past GitHub step if already connected
+  useEffect(() => {
+    if (step === 0 && isGithubConnected) {
+      setStep(1)
+    }
+  }, [step, isGithubConnected])
 
   function handleUsernameSubmit() {
     if (username.length < 3) {
@@ -56,7 +63,7 @@ export function OnboardingForm({ githubUsername }: OnboardingFormProps) {
         return
       }
       toast.success("Username set!")
-      setStep(1)
+      setStep(2)
     })
   }
 
@@ -103,8 +110,36 @@ export function OnboardingForm({ githubUsername }: OnboardingFormProps) {
         ))}
       </div>
 
-      {/* Step 1: Username */}
+      {/* Step 0: Connect GitHub (required) */}
       {step === 0 && (
+        <Card>
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-2 flex size-16 items-center justify-center rounded-full bg-muted">
+              <Github className="size-8 text-foreground" />
+            </div>
+            <CardTitle className="font-heading">Connect Your GitHub</CardTitle>
+            <CardDescription>
+              GitHub is at the core of GitUHb. Connect your account to get started.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Button asChild className="w-full" size="lg">
+                <a href="/api/github/connect?returnTo=/onboarding">
+                  <Github className="mr-2 size-5" />
+                  Connect with GitHub
+                </a>
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                We only request read access to your public profile and repositories.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 1: Username */}
+      {step === 1 && (
         <Card>
           <CardHeader>
             <CardTitle className="font-heading">Choose a Username</CardTitle>
@@ -137,65 +172,7 @@ export function OnboardingForm({ githubUsername }: OnboardingFormProps) {
         </Card>
       )}
 
-      {/* Step 2: Connect GitHub */}
-      {step === 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-heading">Connect GitHub</CardTitle>
-            <CardDescription>
-              Link your GitHub account to import repositories, show your contributions, and let others find your work.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isGithubConnected ? (
-              <div className="flex items-center gap-3 rounded-lg border border-uh-teal/30 bg-uh-teal/5 p-4">
-                <CheckCircle2 className="size-5 text-uh-teal" />
-                <div>
-                  <p className="text-sm font-medium">
-                    Connected as <span className="font-mono">@{githubUsername}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Your GitHub account is linked. You can manage this in settings.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <Button asChild className="w-full" variant="outline" size="lg">
-                  <a href="/api/github/connect?returnTo=/onboarding">
-                    <Github className="mr-2 size-5" />
-                    Connect with GitHub
-                  </a>
-                </Button>
-                <p className="text-center text-xs text-muted-foreground">
-                  We only request read access to your public profile.
-                </p>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="justify-between">
-            <Button variant="ghost" onClick={() => setStep(0)}>
-              <ArrowLeft className="mr-2 size-4" />
-              Back
-            </Button>
-            <div className="flex gap-2">
-              {!isGithubConnected && (
-                <Button variant="outline" onClick={() => setStep(2)}>
-                  Skip for now
-                </Button>
-              )}
-              {isGithubConnected && (
-                <Button onClick={() => setStep(2)}>
-                  Continue
-                  <ArrowRight className="ml-2 size-4" />
-                </Button>
-              )}
-            </div>
-          </CardFooter>
-        </Card>
-      )}
-
-      {/* Step 3: Profile */}
+      {/* Step 2: Profile */}
       {step === 2 && (
         <Card>
           <CardHeader>

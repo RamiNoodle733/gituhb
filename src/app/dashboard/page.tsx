@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FolderGit2, FileText, ShieldCheck, Plus, Github } from "lucide-react"
+import { FolderGit2, FileText, ShieldCheck, Plus, Github, ArrowRight } from "lucide-react"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -65,6 +65,29 @@ export default async function DashboardPage() {
           </Link>
         </Button>
       </div>
+
+      {/* Post a Repo CTA */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="flex flex-col items-center gap-4 py-6 sm:flex-row sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+              <Github className="size-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-heading font-semibold">Post a project from your repos</p>
+              <p className="text-sm text-muted-foreground">
+                Select a GitHub repo and find collaborators in seconds.
+              </p>
+            </div>
+          </div>
+          <Button asChild>
+            <Link href="/dashboard/repos">
+              Browse Repos
+              <ArrowRight className="ml-2 size-4" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -133,6 +156,42 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
+      {/* Your Repos */}
+      {githubAccount ? (
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-heading text-lg font-semibold">Your Repos</h2>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/repos">View all repos</Link>
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              <Github className="mx-auto mb-2 size-6" />
+              <p>Browse, feature, and post your repos for collaboration.</p>
+              <Button variant="outline" size="sm" className="mt-3" asChild>
+                <Link href="/dashboard/repos">Open Repos</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div>
+          <h2 className="mb-4 font-heading text-lg font-semibold">Your Repos</h2>
+          <Card>
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              <Github className="mx-auto mb-2 size-6" />
+              <p>Connect GitHub to browse your repos and post them for collaboration.</p>
+              <Button variant="outline" size="sm" className="mt-3" asChild>
+                <Link href="/api/github/connect?returnTo=/dashboard">
+                  Connect GitHub
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Recent Projects */}
       <div>
         <div className="mb-4 flex items-center justify-between">
@@ -175,42 +234,6 @@ export default async function DashboardPage() {
           </Card>
         )}
       </div>
-
-      {/* Your Repos */}
-      {githubAccount ? (
-        <div>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-heading text-lg font-semibold">Your Repos</h2>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard/repos">View all repos</Link>
-            </Button>
-          </div>
-          <Card>
-            <CardContent className="py-6 text-center text-sm text-muted-foreground">
-              <Github className="mx-auto mb-2 size-6" />
-              <p>Browse, feature, and post your repos for collaboration.</p>
-              <Button variant="outline" size="sm" className="mt-3" asChild>
-                <Link href="/dashboard/repos">Open Repos</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        <div>
-          <h2 className="mb-4 font-heading text-lg font-semibold">Your Repos</h2>
-          <Card>
-            <CardContent className="py-6 text-center text-sm text-muted-foreground">
-              <Github className="mx-auto mb-2 size-6" />
-              <p>Connect GitHub to browse your repos and post them for collaboration.</p>
-              <Button variant="outline" size="sm" className="mt-3" asChild>
-                <Link href="/api/github/connect?returnTo=/dashboard">
-                  Connect GitHub
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Recent Applications */}
       <div>

@@ -126,6 +126,13 @@ export function NavbarActions({ user }: NavbarActionsProps) {
               </SheetTitle>
               <nav className="mt-6 flex flex-col gap-3">
                 <Link
+                  href="/dashboard/repos"
+                  onClick={() => setOpen(false)}
+                  className="text-sm font-medium"
+                >
+                  My Repos
+                </Link>
+                <Link
                   href="/projects"
                   onClick={() => setOpen(false)}
                   className="text-sm font-medium"
