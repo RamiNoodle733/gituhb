@@ -151,6 +151,60 @@ export async function updateApplicationStatus(
   return {}
 }
 
+export async function joinProject(projectId: string) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: "You must be signed in to join." }
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { uhEmailVerified: true },
+  })
+  if (!user?.uhEmailVerified) {
+    return { error: "You must verify your UH email before joining projects." }
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      ownerId: true,
+      slug: true,
+      status: true,
+      roles: {
+        where: { filled: false },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  })
+
+  if (!project) return { error: "Project not found." }
+  if (project.ownerId === session.user.id) return { error: "You cannot join your own project." }
+  if (project.status !== "ACTIVE") return { error: "This project is not currently accepting members." }
+  if (project.roles.length === 0) return { error: "No open spots available." }
+
+  const roleId = project.roles[0].id
+
+  const existing = await prisma.application.findFirst({
+    where: { userId: session.user.id, projectId },
+  })
+  if (existing) return { error: "You have already requested to join this project." }
+
+  await prisma.application.create({
+    data: {
+      message: "",
+      userId: session.user.id,
+      projectId,
+      roleId,
+    },
+  })
+
+  revalidatePath(`/projects/${project.slug}`)
+  revalidatePath(`/projects/${project.slug}/manage`)
+  return { success: true }
+}
+
 export async function withdrawApplication(applicationId: string) {
   const session = await auth()
   if (!session?.user?.id) {

@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { auth } from "@/auth"
-import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/ui/logo"
 import { NavbarActions } from "./navbar-actions"
 
@@ -37,25 +36,10 @@ export async function Navbar() {
             >
               Projects
             </Link>
-            {user && (
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Dashboard
-              </Link>
-            )}
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
-          {user && (
-            <Button size="sm" asChild className="hidden md:inline-flex">
-              <Link href="/dashboard/repos">Post a Repo</Link>
-            </Button>
-          )}
-          <NavbarActions user={user} />
-        </div>
+        <NavbarActions user={user} />
       </div>
     </header>
   )

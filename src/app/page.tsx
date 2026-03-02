@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { ProjectCard } from "@/components/projects/project-card"
 import { Logo } from "@/components/ui/logo"
 import { getFeaturedProjects } from "@/lib/queries/projects"
-import { Github, GitFork, Users, ArrowRight } from "lucide-react"
+import { Github, ArrowRight } from "lucide-react"
 
 export default async function HomePage() {
   const featuredProjects = await getFeaturedProjects()
@@ -42,45 +42,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Value Props */}
-      <section className="container mx-auto px-4 py-16 md:py-20">
-        <div className="grid gap-8 md:grid-cols-3">
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
-              <Github className="size-6 text-primary" />
-            </div>
-            <h3 className="mb-2 font-heading text-lg font-semibold">
-              Connect Your GitHub
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Link your account and import your repositories instantly. Your GitHub profile is front and center.
-            </p>
-          </div>
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
-              <GitFork className="size-6 text-primary" />
-            </div>
-            <h3 className="mb-2 font-heading text-lg font-semibold">
-              Post in Seconds
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Pick a repo, add collaboration details, and publish. It takes less than a minute to find teammates.
-            </p>
-          </div>
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-primary/10">
-              <Users className="size-6 text-primary" />
-            </div>
-            <h3 className="mb-2 font-heading text-lg font-semibold">
-              Find Collaborators
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Browse projects by technology and interest. Apply to join a team and start building together.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Featured Projects */}
       {featuredProjects.length > 0 && (
         <section className="border-t bg-muted/30">
@@ -106,54 +67,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      {/* How It Works */}
-      <section className="border-t">
-        <div className="container mx-auto px-4 py-16">
-          <div className="mb-12 text-center">
-            <h2 className="font-heading text-3xl font-bold tracking-tight">
-              How It Works
-            </h2>
-          </div>
-          <div className="mx-auto max-w-3xl">
-            <div className="grid gap-8 md:grid-cols-3">
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-primary font-heading text-sm font-bold text-primary-foreground">
-                  1
-                </div>
-                <h3 className="mb-2 font-heading text-base font-semibold">
-                  Sign In &amp; Connect GitHub
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Use your UH account to sign in, then link your GitHub profile.
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-primary font-heading text-sm font-bold text-primary-foreground">
-                  2
-                </div>
-                <h3 className="mb-2 font-heading text-base font-semibold">
-                  Pick a Repo &amp; Post
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Select a repository, add roles you need, and publish for collaboration.
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-primary font-heading text-sm font-bold text-primary-foreground">
-                  3
-                </div>
-                <h3 className="mb-2 font-heading text-base font-semibold">
-                  Build Your Team
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Review applications, accept teammates, and start shipping together.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Bottom CTA */}
       <section className="bg-primary text-primary-foreground">

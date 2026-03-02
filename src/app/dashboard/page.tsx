@@ -5,13 +5,11 @@ import { prisma } from "@/lib/prisma"
 import { formatDate } from "@/lib/utils"
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FolderGit2, FileText, ShieldCheck, Plus, Github, ArrowRight } from "lucide-react"
+import { Github, ArrowRight } from "lucide-react"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -24,7 +22,7 @@ export default async function DashboardPage() {
     prisma.application.count({ where: { userId: session.user.id } }),
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { uhEmailVerified: true, name: true, githubReposCount: true },
+      select: { name: true },
     }),
     prisma.account.findFirst({
       where: { userId: session.user.id, provider: "github" },
@@ -51,19 +49,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back{user?.name ? `, ${user.name}` : ""}!
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/projects/new">
-            <Plus className="mr-2 size-4" />
-            New Project
-          </Link>
-        </Button>
+      <div>
+        <h1 className="font-heading text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome back{user?.name ? `, ${user.name}` : ""}!
+          {" "}{projectCount} project{projectCount !== 1 ? "s" : ""} &middot; {applicationCount} application{applicationCount !== 1 ? "s" : ""}
+        </p>
       </div>
 
       {/* Post a Repo CTA */}
@@ -76,121 +67,20 @@ export default async function DashboardPage() {
             <div>
               <p className="font-heading font-semibold">Post a project from your repos</p>
               <p className="text-sm text-muted-foreground">
-                Select a GitHub repo and find collaborators in seconds.
+                {githubAccount
+                  ? "Select a GitHub repo and find collaborators in seconds."
+                  : "Connect GitHub to browse your repos and post them for collaboration."}
               </p>
             </div>
           </div>
           <Button asChild>
-            <Link href="/dashboard/repos">
-              Browse Repos
+            <Link href={githubAccount ? "/dashboard/repos" : "/api/github/connect?returnTo=/dashboard"}>
+              {githubAccount ? "Browse Repos" : "Connect GitHub"}
               <ArrowRight className="ml-2 size-4" />
             </Link>
           </Button>
         </CardContent>
       </Card>
-
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              My Projects
-            </CardTitle>
-            <FolderGit2 className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{projectCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Applications
-            </CardTitle>
-            <FileText className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{applicationCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              UH Verified
-            </CardTitle>
-            <ShieldCheck className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <Badge
-              variant="outline"
-              className={
-                user?.uhEmailVerified
-                  ? "bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300"
-                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300"
-              }
-            >
-              {user?.uhEmailVerified ? "Verified" : "Not Verified"}
-            </Badge>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              GitHub Repos
-            </CardTitle>
-            <Github className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {githubAccount ? (
-              <p className="text-2xl font-bold">
-                {user?.githubReposCount ?? 0}
-              </p>
-            ) : (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/api/github/connect?returnTo=/dashboard">
-                  Connect
-                </Link>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Your Repos */}
-      {githubAccount ? (
-        <div>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-heading text-lg font-semibold">Your Repos</h2>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard/repos">View all repos</Link>
-            </Button>
-          </div>
-          <Card>
-            <CardContent className="py-6 text-center text-sm text-muted-foreground">
-              <Github className="mx-auto mb-2 size-6" />
-              <p>Browse, feature, and post your repos for collaboration.</p>
-              <Button variant="outline" size="sm" className="mt-3" asChild>
-                <Link href="/dashboard/repos">Open Repos</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        <div>
-          <h2 className="mb-4 font-heading text-lg font-semibold">Your Repos</h2>
-          <Card>
-            <CardContent className="py-6 text-center text-sm text-muted-foreground">
-              <Github className="mx-auto mb-2 size-6" />
-              <p>Connect GitHub to browse your repos and post them for collaboration.</p>
-              <Button variant="outline" size="sm" className="mt-3" asChild>
-                <Link href="/api/github/connect?returnTo=/dashboard">
-                  Connect GitHub
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Recent Projects */}
       <div>
@@ -227,8 +117,8 @@ export default async function DashboardPage() {
           <Card>
             <CardContent className="py-8 text-center text-sm text-muted-foreground">
               No projects yet.{" "}
-              <Link href="/projects/new" className="text-primary hover:underline">
-                Create one
+              <Link href="/dashboard/repos" className="text-primary hover:underline">
+                Post one from your repos
               </Link>
             </CardContent>
           </Card>

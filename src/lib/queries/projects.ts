@@ -1,41 +1,9 @@
 import { prisma } from "@/lib/prisma"
-import type { Prisma } from "@/generated/prisma/client"
 
-const PROJECTS_PER_PAGE = 12
+const PROJECTS_PER_PAGE = 20
 
-interface GetProjectsParams {
-  search?: string
-  techStack?: string
-  timeCommitment?: string
-  status?: string
-  page?: number
-}
-
-export async function getProjects({
-  search,
-  techStack,
-  timeCommitment,
-  status,
-  page = 1,
-}: GetProjectsParams) {
-  const where: Prisma.ProjectWhereInput = {
-    status: status ? (status as any) : "ACTIVE",
-  }
-
-  if (search) {
-    where.OR = [
-      { title: { contains: search, mode: "insensitive" } },
-      { description: { contains: search, mode: "insensitive" } },
-    ]
-  }
-
-  if (techStack) {
-    where.techStack = { has: techStack }
-  }
-
-  if (timeCommitment) {
-    where.timeCommitment = timeCommitment as any
-  }
+export async function getProjects({ page = 1 }: { page?: number } = {}) {
+  const where = { status: "ACTIVE" as const }
 
   const [projects, totalCount] = await Promise.all([
     prisma.project.findMany({

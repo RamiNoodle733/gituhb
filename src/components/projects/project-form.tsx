@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { useForm, useFieldArray } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus, Trash2, Loader2, Github } from "lucide-react"
+import { Loader2, Github } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -31,7 +31,7 @@ import {
   type CreateProjectInput,
 } from "@/lib/validators/project"
 import { createProject, updateProject } from "@/lib/actions/project"
-import { TECH_STACK_OPTIONS, TAG_OPTIONS, TIME_COMMITMENT_LABELS, LANGUAGE_TO_TECH } from "@/lib/constants"
+import { TECH_STACK_OPTIONS, TIME_COMMITMENT_LABELS, LANGUAGE_TO_TECH } from "@/lib/constants"
 import { ProjectStatus } from "@/generated/prisma/enums"
 import { RepoPickerDialog } from "@/components/projects/repo-picker-dialog"
 
@@ -58,13 +58,8 @@ export function ProjectForm({ mode, initialData, projectId, githubConnected }: P
       techStack: initialData?.techStack ?? [],
       tags: initialData?.tags ?? [],
       maxMembers: initialData?.maxMembers,
-      roles: initialData?.roles ?? [{ title: "", description: "", count: 1 }],
+      roles: initialData?.roles ?? [{ title: "Collaborator", description: "", count: 3 }],
     },
-  })
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "roles",
   })
 
   function onSubmit(data: CreateProjectInput) {
@@ -113,27 +108,12 @@ export function ProjectForm({ mode, initialData, projectId, githubConnected }: P
       form.setValue("description", repo.description)
     }
 
-    // Map language to tech stack options
     const currentTech = form.getValues("techStack")
     if (repo.language && LANGUAGE_TO_TECH[repo.language]) {
       const tech = LANGUAGE_TO_TECH[repo.language]
       if (!currentTech.includes(tech)) {
         form.setValue("techStack", [...currentTech, tech])
       }
-    }
-
-    // Map topics to tags
-    const currentTags = form.getValues("tags")
-    const tagOptions = TAG_OPTIONS as readonly string[]
-    for (const topic of repo.topics) {
-      const normalized = topic.toLowerCase()
-      const match = tagOptions.find((t) => t.toLowerCase().replace(/\//g, "-") === normalized)
-      if (match && !currentTags.includes(match)) {
-        currentTags.push(match)
-      }
-    }
-    if (currentTags.length > form.getValues("tags").length) {
-      form.setValue("tags", [...currentTags])
     }
 
     toast.success("Repository linked! Fields auto-filled.")
@@ -191,35 +171,11 @@ export function ProjectForm({ mode, initialData, projectId, githubConnected }: P
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Short Description</FormLabel>
+              <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="A brief description of your project..."
                   className="min-h-20"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Long Description */}
-        <FormField
-          control={form.control}
-          name="longDescription"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Detailed Description{" "}
-                <span className="text-muted-foreground font-normal">
-                  (optional)
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Provide more details about your project, goals, and what you're building..."
-                  className="min-h-32"
                   {...field}
                 />
               </FormControl>
@@ -298,143 +254,6 @@ export function ProjectForm({ mode, initialData, projectId, githubConnected }: P
             </FormItem>
           )}
         />
-
-        {/* Tags */}
-        <FormField
-          control={form.control}
-          name="tags"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tags</FormLabel>
-              <FormControl>
-                <TagInput
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={TAG_OPTIONS}
-                  placeholder="Add tags..."
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Max Members */}
-        <FormField
-          control={form.control}
-          name="maxMembers"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Max Members{" "}
-                <span className="text-muted-foreground font-normal">
-                  (optional)
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={1}
-                  placeholder="e.g. 5"
-                  {...field}
-                  value={field.value ?? ""}
-                  onChange={(e) =>
-                    field.onChange(
-                      e.target.value ? parseInt(e.target.value, 10) : undefined
-                    )
-                  }
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Roles */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <FormLabel className="text-base">Roles</FormLabel>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => append({ title: "", description: "", count: 1 })}
-            >
-              <Plus className="size-4" />
-              Add Role
-            </Button>
-          </div>
-          {fields.map((field, index) => (
-            <div
-              key={field.id}
-              className="flex items-start gap-3 rounded-lg border p-4"
-            >
-              <div className="grid flex-1 gap-3 sm:grid-cols-[1fr_1fr_80px]">
-                <FormField
-                  control={form.control}
-                  name={`roles.${index}.title`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Frontend Dev" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`roles.${index}.description`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Description</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="What they'll do"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name={`roles.${index}.count`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Count</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value, 10) || 1)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              {fields.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="mt-6 shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => remove(index)}
-                >
-                  <Trash2 className="size-4" />
-                  <span className="sr-only">Remove role</span>
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
 
         {/* Status (edit mode only) */}
         {mode === "edit" && (
