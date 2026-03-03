@@ -65,9 +65,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               .slice(0, 5)
               .map(([lang]) => lang)
 
+            // Use GitHub username as the platform username
+            const ghLogin = profile.login.toLowerCase()
+
+            // Check if this username is already taken by a different user
+            const existingUser = await prisma.user.findUnique({
+              where: { username: ghLogin },
+              select: { id: true },
+            })
+            const setUsername = !existingUser || existingUser.id === user.id
+
             await prisma.user.update({
               where: { id: user.id },
               data: {
+                ...(setUsername ? { username: ghLogin } : {}),
                 githubUsername: profile.login,
                 githubProfileUrl: profile.html_url,
                 githubBio: profile.bio,

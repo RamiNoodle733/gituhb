@@ -34,7 +34,7 @@ export default async function SignInPage() {
           <form
             action={async () => {
               "use server"
-              await signIn("github", { redirectTo: "/onboarding" })
+              await signIn("github", { redirectTo: "/dashboard" })
             }}
           >
             <Button type="submit" className="w-full" size="lg">
