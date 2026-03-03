@@ -9,7 +9,7 @@ export default async function DashboardSettingsPage() {
     redirect("/auth/signin")
   }
 
-  const [user, githubAccount] = await Promise.all([
+  const [user, userEmails] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -23,9 +23,9 @@ export default async function DashboardSettingsPage() {
         githubUsername: true,
       },
     }),
-    prisma.account.findFirst({
-      where: { userId: session.user.id, provider: "github" },
-      select: { id: true },
+    prisma.userEmail.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "asc" },
     }),
   ])
 
@@ -36,7 +36,7 @@ export default async function DashboardSettingsPage() {
   return (
     <div className="space-y-8">
       <h1 className="font-heading text-2xl font-bold tracking-tight">Settings</h1>
-      <SettingsForm user={{ ...user, githubConnected: !!githubAccount }} />
+      <SettingsForm user={user} emails={userEmails} />
     </div>
   )
 }

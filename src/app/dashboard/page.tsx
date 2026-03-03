@@ -17,16 +17,12 @@ export default async function DashboardPage() {
     redirect("/auth/signin")
   }
 
-  const [projectCount, applicationCount, user, githubAccount] = await Promise.all([
+  const [projectCount, applicationCount, user] = await Promise.all([
     prisma.project.count({ where: { ownerId: session.user.id } }),
     prisma.application.count({ where: { userId: session.user.id } }),
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: { name: true },
-    }),
-    prisma.account.findFirst({
-      where: { userId: session.user.id, provider: "github" },
-      select: { id: true },
     }),
   ])
 
@@ -65,15 +61,13 @@ export default async function DashboardPage() {
             <div>
               <p className="font-heading font-semibold">Post a project from your repos</p>
               <p className="text-sm text-muted-foreground">
-                {githubAccount
-                  ? "Select a repo and find collaborators in seconds."
-                  : "Connect GitHub to post repos for collaboration."}
+                Select a repo and find collaborators in seconds.
               </p>
             </div>
           </div>
           <Button asChild>
-            <Link href={githubAccount ? "/dashboard/repos" : "/api/github/connect?returnTo=/dashboard"}>
-              {githubAccount ? "Browse Repos" : "Connect GitHub"}
+            <Link href="/dashboard/repos">
+              Browse Repos
               <ArrowRight className="ml-2 size-4" />
             </Link>
           </Button>

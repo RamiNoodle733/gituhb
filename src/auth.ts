@@ -2,7 +2,7 @@ import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { authConfig } from "@/auth.config"
-import { isUhEmail } from "@/lib/utils"
+import { fetchGitHubUserProfile, fetchUserRepos } from "@/lib/github"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -40,22 +40,48 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   events: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       try {
-        if (account?.provider === "microsoft-entra-id" && profile && user.id) {
-          const email = (
-            (profile.email as string | undefined) ??
-            (profile.preferred_username as string | undefined) ??
-            (profile.mail as string | undefined)
-          )?.toLowerCase()
-          if (email && isUhEmail(email)) {
+        if (account?.provider === "github" && account.access_token && user.id) {
+          const token = account.access_token
+
+          try {
+            const [profile, repos] = await Promise.all([
+              fetchGitHubUserProfile(token),
+              fetchUserRepos(token),
+            ])
+
+            const publicRepos = repos.filter((r) => !r.private)
+            const totalStars = publicRepos.reduce((sum, r) => sum + r.stargazers_count, 0)
+
+            const langCounts: Record<string, number> = {}
+            for (const repo of publicRepos) {
+              if (repo.language) {
+                langCounts[repo.language] = (langCounts[repo.language] || 0) + 1
+              }
+            }
+            const topLanguages = Object.entries(langCounts)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5)
+              .map(([lang]) => lang)
+
             await prisma.user.update({
               where: { id: user.id },
               data: {
-                uhEmail: email,
-                uhEmailVerified: true,
+                githubUsername: profile.login,
+                githubProfileUrl: profile.html_url,
+                githubBio: profile.bio,
+                githubReposCount: publicRepos.length,
+                githubTotalStars: totalStars,
+                githubFollowers: profile.followers,
+                githubTopLanguages: topLanguages,
+                githubSyncedAt: new Date(),
               },
             })
+          } catch {
+            // Stats sync failed — save basic GitHub info from the account
+            // The profile data from the OAuth response isn't directly available here,
+            // so we just skip if the API calls fail
           }
         }
       } catch (error) {

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Loader2, ShieldCheck, Github, ExternalLink, CheckCircle2, Unlink } from "lucide-react"
+import { Loader2, ShieldCheck, Github, ExternalLink } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,8 +18,18 @@ import {
   CardContent,
 } from "@/components/ui/card"
 import { TagInput } from "@/components/ui/tag-input"
+import { EmailManagement } from "@/components/settings/email-management"
 import { updateProfile } from "@/lib/actions/profile"
 import { TECH_STACK_OPTIONS } from "@/lib/constants"
+
+interface UserEmail {
+  id: string
+  email: string
+  label: string | null
+  verified: boolean
+  primary: boolean
+  createdAt: Date
+}
 
 interface SettingsFormProps {
   user: {
@@ -31,20 +41,26 @@ interface SettingsFormProps {
     uhEmail: string | null
     uhEmailVerified: boolean
     githubUsername: string | null
-    githubConnected: boolean
   }
+  emails: UserEmail[]
 }
 
-export function SettingsForm({ user }: SettingsFormProps) {
+export function SettingsForm({ user, emails }: SettingsFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [isDisconnecting, startDisconnectTransition] = useTransition()
   const [bio, setBio] = useState(user.bio ?? "")
   const [skills, setSkills] = useState<string[]>(user.skills)
   const [major, setMajor] = useState(user.major ?? "")
   const [graduationYear, setGraduationYear] = useState(
     user.graduationYear?.toString() ?? ""
   )
+
+  // UH email verification state
+  const [uhEmail, setUhEmail] = useState("")
+  const [verificationCode, setVerificationCode] = useState("")
+  const [emailSent, setEmailSent] = useState(false)
+  const [isSendingCode, startSendingCode] = useTransition()
+  const [isVerifying, startVerifying] = useTransition()
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -63,14 +79,44 @@ export function SettingsForm({ user }: SettingsFormProps) {
     })
   }
 
-  function handleDisconnect() {
-    startDisconnectTransition(async () => {
-      const res = await fetch("/api/github/disconnect", { method: "POST" })
+  function handleSendCode() {
+    if (!uhEmail) {
+      toast.error("Please enter your UH email address.")
+      return
+    }
+    startSendingCode(async () => {
+      const res = await fetch("/api/verify-email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: uhEmail }),
+      })
+      const data = await res.json()
       if (!res.ok) {
-        toast.error("Failed to disconnect GitHub account.")
+        toast.error(data.error || "Failed to send verification code.")
         return
       }
-      toast.success("GitHub account disconnected.")
+      setEmailSent(true)
+      toast.success("Verification code sent! Check your email.")
+    })
+  }
+
+  function handleVerifyCode() {
+    if (!verificationCode) {
+      toast.error("Please enter the verification code.")
+      return
+    }
+    startVerifying(async () => {
+      const res = await fetch("/api/verify-email/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: uhEmail, code: verificationCode }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || "Verification failed.")
+        return
+      }
+      toast.success("UH email verified!")
       router.refresh()
     })
   }
@@ -87,89 +133,91 @@ export function SettingsForm({ user }: SettingsFormProps) {
             <Label className="text-muted-foreground">Username</Label>
             <p className="text-sm font-medium">@{user.username ?? "Not set"}</p>
           </div>
-          <div className="space-y-1">
+          {user.githubUsername && (
+            <div className="space-y-1">
+              <Label className="text-muted-foreground">GitHub</Label>
+              <div className="flex items-center gap-2">
+                <Github className="size-4 text-muted-foreground" />
+                <span className="text-sm font-medium font-mono">@{user.githubUsername}</span>
+                <a
+                  href={`https://github.com/${user.githubUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <ExternalLink className="size-3" />
+                </a>
+              </div>
+            </div>
+          )}
+          <div className="space-y-2">
             <Label className="text-muted-foreground">UH Email</Label>
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium">{user.uhEmail ?? "Not available"}</p>
-              {user.uhEmailVerified && (
+            {user.uhEmailVerified ? (
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium">{user.uhEmail}</p>
                 <Badge className="bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300">
                   <ShieldCheck className="mr-1 size-3" />
                   Verified
                 </Badge>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Automatically verified through your UH Microsoft account.
-            </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {!emailSent ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="your-email@uh.edu"
+                      value={uhEmail}
+                      onChange={(e) => setUhEmail(e.target.value)}
+                    />
+                    <Button
+                      onClick={handleSendCode}
+                      disabled={isSendingCode}
+                      size="sm"
+                    >
+                      {isSendingCode && <Loader2 className="mr-2 size-4 animate-spin" />}
+                      Send Code
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Code sent to {uhEmail}
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter 6-digit code"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        maxLength={6}
+                      />
+                      <Button
+                        onClick={handleVerifyCode}
+                        disabled={isVerifying}
+                        size="sm"
+                      >
+                        {isVerifying && <Loader2 className="mr-2 size-4 animate-spin" />}
+                        Verify
+                      </Button>
+                    </div>
+                    <button
+                      onClick={() => setEmailSent(false)}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Use a different email
+                    </button>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Verify your @uh.edu or @cougarnet.uh.edu email to create and join projects.
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* GitHub Connection */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="font-heading text-lg">GitHub</CardTitle>
-            {user.githubUsername && (
-              <a
-                href={`https://github.com/${user.githubUsername}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-              >
-                <ExternalLink className="size-3" />
-                View profile
-              </a>
-            )}
-          </div>
-          <CardDescription>
-            Connect your GitHub account to import repositories and display your contributions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {user.githubConnected ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 rounded-lg border border-uh-teal/30 bg-uh-teal/5 p-4">
-                <CheckCircle2 className="size-5 shrink-0 text-uh-teal" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium">
-                    Connected as <span className="font-mono">@{user.githubUsername}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Your GitHub account is linked via OAuth.
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDisconnect}
-                disabled={isDisconnecting}
-                className="text-destructive hover:text-destructive"
-              >
-                {isDisconnecting ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : (
-                  <Unlink className="mr-2 size-4" />
-                )}
-                Disconnect GitHub
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <Button asChild variant="outline" size="lg" className="w-full">
-                <a href="/api/github/connect?returnTo=/dashboard/settings">
-                  <Github className="mr-2 size-5" />
-                  Connect with GitHub
-                </a>
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                We only request read access to your public profile and repositories.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Emails */}
+      <EmailManagement emails={emails} />
 
       {/* Profile Info */}
       <Card>

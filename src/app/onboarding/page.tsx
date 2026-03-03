@@ -11,14 +11,13 @@ export default async function OnboardingPage() {
     redirect("/auth/signin")
   }
 
-  // Check if user already completed onboarding
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { username: true, githubUsername: true },
+    select: { username: true },
   })
 
-  // Only redirect if both username and GitHub are set (onboarding fully complete)
-  if (user?.username && user?.githubUsername) {
+  // Redirect if username is already set (onboarding complete)
+  if (user?.username) {
     redirect("/dashboard")
   }
 
@@ -35,7 +34,7 @@ export default async function OnboardingPage() {
           Let&apos;s get you set up in a few quick steps.
         </p>
       </div>
-      <OnboardingForm githubUsername={user?.githubUsername} />
+      <OnboardingForm />
     </div>
   )
 }

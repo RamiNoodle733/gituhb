@@ -14,6 +14,7 @@ const errorMessages: Record<string, string> = {
   Configuration: "There is a problem with the server configuration.",
   AccessDenied: "Access denied. You do not have permission to sign in.",
   Verification: "The verification link has expired or has already been used.",
+  OAuthAccountNotLinked: "This GitHub account is already linked to another account. Try signing in with your original account.",
   Default: "An unexpected error occurred during authentication.",
 }
 
